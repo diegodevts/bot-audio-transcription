@@ -4,6 +4,8 @@ import fs from 'fs/promises'
 import WAWebJS, { MessageMedia } from 'whatsapp-web.js'
 import { config } from 'dotenv'
 import { transcriptor } from '../transcriptor/transcript'
+import { imagetoText } from '../image-to-text/image-to-text'
+import { solveChord } from '../chord-solver/solve-chord'
 
 config()
 export async function bot() {
@@ -67,6 +69,38 @@ export async function bot() {
 
       message.reply(text)
     }
+
+    if (
+      message.body == '!text' &&
+      mediaQuotedType &&
+      mediaQuotedType == 'image'
+    ) {
+      const media = await (await message.getQuotedMessage()).downloadMedia()
+      const mediaC = media.data
+
+      await fs.writeFile(`./${filename}.png`, Buffer.from(mediaC, 'base64'))
+
+      const text = await imagetoText(filename)
+      await fs.unlink(`./${filename}.png`)
+
+      message.reply(text)
+    }
+
+    if (
+      message.body == '!scale' &&
+      mediaQuotedType &&
+      mediaQuotedType == 'ptt'
+    ) {
+      const media = await (await message.getQuotedMessage()).downloadMedia()
+      const mediaC = media.data
+
+      await fs.writeFile(`./${filename}.mp3`, Buffer.from(mediaC, 'base64'))
+
+      const chord = await solveChord(filename)
+      await fs.unlink(`./${filename}.mp3`)
+
+      message.reply(chord ?? '')
+    }
   })
 
   client.on('message_create', async (message: WAWebJS.Message) => {
@@ -129,6 +163,38 @@ export async function bot() {
         await fs.unlink(`./${filename}.mp3`)
 
         message.reply(text)
+      }
+
+      if (
+        message.body == '!text' &&
+        mediaQuotedType &&
+        mediaQuotedType == 'image'
+      ) {
+        const media = await (await message.getQuotedMessage()).downloadMedia()
+        const mediaC = media.data
+
+        await fs.writeFile(`./${filename}.png`, Buffer.from(mediaC, 'base64'))
+
+        const text = await imagetoText(filename)
+        await fs.unlink(`./${filename}.png`)
+
+        message.reply(text)
+      }
+
+      if (
+        message.body == '!scale' &&
+        mediaQuotedType &&
+        mediaQuotedType == 'ptt'
+      ) {
+        const media = await (await message.getQuotedMessage()).downloadMedia()
+        const mediaC = media.data
+
+        await fs.writeFile(`./${filename}.mp3`, Buffer.from(mediaC, 'base64'))
+
+        const chord = await solveChord(filename)
+        await fs.unlink(`./${filename}.mp3`)
+
+        message.reply(chord ?? '')
       }
     }
   })
